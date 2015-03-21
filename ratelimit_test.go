@@ -12,7 +12,7 @@ import (
 var _ = Describe("RateLimiter", func() {
 
 	It("should accurately rate-limit at small rates", func() {
-		n := 100000
+		n := 10
 		rl := New(n, time.Minute)
 		for i := 0; i < n; i++ {
 			Expect(rl.Limit()).To(BeFalse(), "on cycle %d", i)
