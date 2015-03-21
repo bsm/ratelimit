@@ -47,14 +47,14 @@ var _ = Describe("RateLimiter", func() {
 		for i := 0; i < c; i++ {
 			wg.Add(1)
 
-			go func() {
+			go func(thread int) {
 				defer GinkgoRecover()
 				defer wg.Done()
 
 				for j := 0; j < n; j++ {
-					Expect(rl.Limit()).To(BeFalse(), "thread %d, cycle %d", i, j)
+					Expect(rl.Limit()).To(BeFalse(), "thread %d, cycle %d", thread, j)
 				}
-			}()
+			}(i)
 		}
 		wg.Wait()
 		Expect(rl.Limit()).To(BeTrue())
