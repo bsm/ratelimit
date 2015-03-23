@@ -25,40 +25,40 @@ import (
 
 // RateLimit instances are thread-safe.
 type RateLimiter struct {
-	allowance, max, unit, lastCheck int64
+	allowance, max, unit, lastCheck uint64
 }
 
 // New creates a new rate limiter instance
 func New(rate int, per time.Duration) *RateLimiter {
-	nano := int64(per)
+	nano := uint64(per)
 	if nano < 1 {
-		nano = int64(time.Second)
+		nano = uint64(time.Second)
 	}
 	if rate < 1 {
 		rate = 1
 	}
 
 	return &RateLimiter{
-		allowance: int64(rate) * nano, // store our allowance, in ns units
-		max:       int64(rate) * nano, // remember our maximum allowance
-		unit:      nano,               // remember our unit size
+		allowance: uint64(rate) * nano, // store our allowance, in ns units
+		max:       uint64(rate) * nano, // remember our maximum allowance
+		unit:      nano,                // remember our unit size
 
-		lastCheck: time.Now().UnixNano(),
+		lastCheck: uint64(time.Now().UnixNano()),
 	}
 }
 
 // Limit returns true if rate was exceeded
 func (rl *RateLimiter) Limit() bool {
 	// Calculate the number of ns that have passed since our last call
-	now := time.Now().UnixNano()
-	passed := now - atomic.SwapInt64(&rl.lastCheck, now)
+	now := uint64(time.Now().UnixNano())
+	passed := now - atomic.SwapUint64(&rl.lastCheck, now)
 
 	// Add them to our allowance
-	current := atomic.AddInt64(&rl.allowance, passed)
+	current := atomic.AddUint64(&rl.allowance, passed)
 
 	// Ensure our allowance is not over maximum
 	if current > rl.max {
-		atomic.AddInt64(&rl.allowance, rl.max-current)
+		atomic.AddUint64(&rl.allowance, rl.max-current)
 		current = rl.max
 	}
 
@@ -68,6 +68,6 @@ func (rl *RateLimiter) Limit() bool {
 	}
 
 	// Not limited, subtract a unit
-	atomic.AddInt64(&rl.allowance, -rl.unit)
+	atomic.AddUint64(&rl.allowance, -rl.unit)
 	return false
 }
