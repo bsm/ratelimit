@@ -39,6 +39,17 @@ var _ = Describe("RateLimiter", func() {
 		Eventually(rl.Limit, "60ms", "10ms").Should(BeFalse())
 	})
 
+	It("should undo", func() {
+		rl := New(1, time.Minute)
+		Expect(rl.Limit()).To(BeFalse())
+		Expect(rl.Limit()).To(BeTrue())
+		Expect(rl.Limit()).To(BeTrue())
+		rl.Undo()
+		rl.Undo()
+		Expect(rl.Limit()).To(BeFalse())
+		Expect(rl.Limit()).To(BeTrue())
+	})
+
 	It("should be thread-safe", func() {
 		c := 10
 		n := 10000

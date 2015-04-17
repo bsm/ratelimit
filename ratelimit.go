@@ -71,3 +71,13 @@ func (rl *RateLimiter) Limit() bool {
 	atomic.AddUint64(&rl.allowance, -rl.unit)
 	return false
 }
+
+// Undo reverts the last Limit() call, returning consumed allowance
+func (rl *RateLimiter) Undo() {
+	current := atomic.AddUint64(&rl.allowance, rl.unit)
+
+	// Ensure our allowance is not over maximum
+	if current > rl.max {
+		atomic.AddUint64(&rl.allowance, rl.max-current)
+	}
+}
