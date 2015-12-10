@@ -9,5 +9,5 @@ go:
 install:
   - go get github.com/onsi/ginkgo github.com/onsi/gomega
   - mkdir -p $GOPATH/src/gopkg.in/bsm
-  - mv $GOPATH/src/github.com/bsm/ratelimit $GOPATH/src/gopkg.in/gopkg.in/bsm/ratelimit.v1
+  - mv $GOPATH/src/github.com/bsm/ratelimit $GOPATH/src/gopkg.in/bsm/ratelimit.v1
   - cd $GOPATH/src/gopkg.in/bsm/ratelimit.v1
