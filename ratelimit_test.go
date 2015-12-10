@@ -26,7 +26,7 @@ var _ = Describe("RateLimiter", func() {
 		for !rl.Limit() {
 			count++
 		}
-		Expect(count).To(BeNumerically("~", 100000, 1))
+		Expect(count).To(BeNumerically("~", 100000, 10))
 	})
 
 	It("should accurately rate-limit at large intervals", func() {
