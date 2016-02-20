@@ -96,7 +96,35 @@ var _ = Describe("RateLimiter", func() {
 		Expect(rl.Limit()).To(BeTrue())
 	})
 
+	It("should allow to upate rate", func() {
+		var count int
+		rl := New(5, 50*time.Millisecond)
+		for !rl.Limit() {
+			count++
+		}
+		Expect(count).To(Equal(5))
+
+		rl.UpdateRate(10)
+		time.Sleep(50 * time.Millisecond)
+
+		for !rl.Limit() {
+			count++
+		}
+		Expect(count).To(Equal(15))
+	})
+
 })
+
+// --------------------------------------------------------------------
+
+func BenchmarkLimit(b *testing.B) {
+	rl := New(1000, time.Second)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		rl.Limit()
+	}
+}
 
 // --------------------------------------------------------------------
 
