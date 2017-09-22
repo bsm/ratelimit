@@ -1,16 +1,13 @@
-default: test
+default: vet test
 
-testdeps:
-	@go get github.com/onsi/ginkgo
-	@go get github.com/onsi/gomega
+vet:
+	go vet .
 
-test: testdeps
-	@go test ./...
+test:
+	go test .
 
-testrace: testdeps
-	@go test ./... -race
-
-testall: test testrace
+test-race:
+	go test . -race
 
 bench:
-	@go test ./... -run=NONE -bench=.
+	go test . -run=NONE -bench=.

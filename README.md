@@ -1,4 +1,9 @@
-# RateLimit [![Build Status](https://travis-ci.org/bsm/ratelimit.png?branch=master)](https://travis-ci.org/bsm/ratelimit) [![Documentation](https://godoc.org/github.com/bsm/ratelimit?status.svg)](http://godoc.org/github.com/bsm/ratelimit)
+# RateLimit
+
+[![Build Status](https://travis-ci.org/bsm/ratelimit.png?branch=master)](https://travis-ci.org/bsm/ratelimit)
+[![GoDoc](https://godoc.org/github.com/bsm/ratelimit?status.png)](http://godoc.org/github.com/bsm/ratelimit)
+[![Go Report Card](https://goreportcard.com/badge/github.com/bsm/ratelimit)](https://goreportcard.com/report/github.com/bsm/ratelimit)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 Simple, thread-safe Go rate-limiter.
 Inspired by Antti Huima's algorithm on http://stackoverflow.com/a/668327
@@ -9,7 +14,7 @@ Inspired by Antti Huima's algorithm on http://stackoverflow.com/a/668327
 package main
 
 import (
-  "gopkg.in/bsm/ratelimit.v1"
+  "github.com/bsm/ratelimit"
   "log"
 )
 
@@ -28,27 +33,6 @@ func main() {
 }
 ```
 
-### Licence
+### Documentation
 
-```
-Copyright (c) 2015 Black Square Media
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-```
+Full documentation is available on [GoDoc](http://godoc.org/github.com/bsm/ratelimit)
