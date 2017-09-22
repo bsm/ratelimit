@@ -52,7 +52,7 @@ var _ = Describe("RateLimiter", func() {
 		var count int
 		rl := New(5, 10*time.Millisecond)
 		start := time.Now()
-		for time.Now().Sub(start) < 100*time.Millisecond {
+		for time.Since(start) < 100*time.Millisecond {
 			if !rl.Limit() {
 				count++
 			}
