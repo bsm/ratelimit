@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/bsm/ratelimit"
+	. "github.com/bsm/ratelimit/v3"
 )
 
 func delta(x, y int) int {

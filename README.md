@@ -1,8 +1,6 @@
 # RateLimit
 
-[![Build Status](https://travis-ci.org/bsm/ratelimit.png?branch=master)](https://travis-ci.org/bsm/ratelimit)
-[![GoDoc](https://godoc.org/github.com/bsm/ratelimit?status.png)](http://godoc.org/github.com/bsm/ratelimit)
-[![Go Report Card](https://goreportcard.com/badge/github.com/bsm/ratelimit)](https://goreportcard.com/report/github.com/bsm/ratelimit)
+[![GoDoc](https://pkg.go.dev/badge/github.com/bsm/ratelimit)](https://pkg.go.dev/github.com/bsm/ratelimit)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 Simple, thread-safe Go rate-limiter.
@@ -14,7 +12,7 @@ Inspired by Antti Huima's algorithm on http://stackoverflow.com/a/668327
 package main
 
 import (
-  "github.com/bsm/ratelimit"
+  "github.com/bsm/ratelimit/v3"
   "log"
 )
 
@@ -25,7 +23,7 @@ func main() {
 
   for i:=0; i<20; i++ {
     if rl.Limit() {
-      fmt.Println("DOH! Over limit!")
+      fmt.Println("Doh! Over limit!")
     } else {
       fmt.Println("OK")
     }
@@ -35,4 +33,4 @@ func main() {
 
 ### Documentation
 
-Full documentation is available on [GoDoc](http://godoc.org/github.com/bsm/ratelimit)
+Full documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/bsm/ratelimit).
