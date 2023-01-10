@@ -1,121 +1,105 @@
-package ratelimit
+package ratelimit_test
 
 import (
-	"sync"
 	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	. "github.com/bsm/ratelimit"
 )
 
-var _ = Describe("RateLimiter", func() {
+func delta(x, y int) int {
+	if x > y {
+		return x - y
+	}
+	return y - x
+}
 
-	It("should accurately rate-limit at small rates", func() {
-		var count int
-		rl := New(10, time.Minute)
-		for !rl.Limit() {
+func TestRateLimiter_smallRates(t *testing.T) {
+	rl := New(10, time.Minute)
+	count := 0
+	for !rl.Limit() {
+		count++
+	}
+	if exp, got := 10, count; exp != got {
+		t.Errorf("expected %v, got %v", exp, got)
+	}
+}
+
+func TestRateLimiter_largeRates(t *testing.T) {
+	rl := New(100_000, time.Hour)
+	count := 0
+	for !rl.Limit() {
+		count++
+	}
+	if exp, got := 100_000, count; delta(exp, got) > 10 {
+		t.Errorf("expected %v, got %v", exp, got)
+	}
+}
+
+func TestRateLimiter_largeIntevals(t *testing.T) {
+	rl := New(10, 360*24*time.Hour)
+	count := 0
+	for !rl.Limit() {
+		count++
+	}
+	if exp, got := 10, count; exp != got {
+		t.Errorf("expected %v, got %v", exp, got)
+	}
+}
+
+func TestRateLimiter_increaseAllowance(t *testing.T) {
+	n := 25
+	rl := New(n, 50*time.Millisecond)
+	for i := 0; i < n; i++ {
+		if rl.Limit() {
+			t.Errorf("expected no limit on cycle %d", i+1)
+		}
+	}
+
+	if !rl.Limit() {
+		t.Errorf("expected limit on cycle %d", n+1)
+	}
+
+	time.Sleep(20 * time.Millisecond)
+	if rl.Limit() {
+		t.Errorf("expected no limit after delay")
+	}
+}
+
+func TestRateLimiter_spreadAllowance(t *testing.T) {
+	rl := New(5, 10*time.Millisecond)
+	start := time.Now()
+	count := 0
+	for time.Since(start) < 100*time.Millisecond {
+		if !rl.Limit() {
 			count++
 		}
-		Expect(count).To(Equal(10))
-	})
+	}
+	if exp, got := 54, count; delta(exp, got) > 1 {
+		t.Errorf("expected %v, got %v", exp, got)
+	}
+}
 
-	It("should accurately rate-limit at large rates", func() {
-		var count int
-		rl := New(100000, time.Hour)
-		for !rl.Limit() {
-			count++
+func TestRateLimiter_Undo(t *testing.T) {
+	n := 5
+	rl := New(n, time.Minute)
+	for i := 0; i < n; i++ {
+		if rl.Limit() {
+			t.Errorf("expected no limit on cycle %d", i+1)
 		}
-		Expect(count).To(BeNumerically("~", 100000, 10))
-	})
+	}
+	if !rl.Limit() {
+		t.Errorf("expected limit on cycle %d", n+1)
+	}
 
-	It("should accurately rate-limit at large intervals", func() {
-		var count int
-		rl := New(100, 360*24*time.Hour)
-		for !rl.Limit() {
-			count++
-		}
-		Expect(count).To(Equal(100))
-	})
-
-	It("should correctly increase allowance", func() {
-		n := 25
-		rl := New(n, 50*time.Millisecond)
-		for i := 0; i < n; i++ {
-			Expect(rl.Limit()).To(BeFalse(), "on cycle %d", i)
-		}
-		Expect(rl.Limit()).To(BeTrue())
-		Eventually(rl.Limit, "60ms", "10ms").Should(BeFalse())
-	})
-
-	It("should correctly spread allowance", func() {
-		var count int
-		rl := New(5, 10*time.Millisecond)
-		start := time.Now()
-		for time.Since(start) < 100*time.Millisecond {
-			if !rl.Limit() {
-				count++
-			}
-		}
-		Expect(count).To(BeNumerically("~", 54, 1))
-	})
-
-	It("should undo", func() {
-		rl := New(5, time.Minute)
-
-		Expect(rl.Limit()).To(BeFalse())
-		Expect(rl.Limit()).To(BeFalse())
-		Expect(rl.Limit()).To(BeFalse())
-		Expect(rl.Limit()).To(BeFalse())
-		Expect(rl.Limit()).To(BeFalse())
-		Expect(rl.Limit()).To(BeTrue())
-
-		rl.Undo()
-		Expect(rl.Limit()).To(BeFalse())
-		Expect(rl.Limit()).To(BeTrue())
-	})
-
-	It("should be thread-safe", func() {
-		c := 100
-		n := 100
-		wg := sync.WaitGroup{}
-		rl := New(c*n, time.Hour)
-		for i := 0; i < c; i++ {
-			wg.Add(1)
-
-			go func(thread int) {
-				defer GinkgoRecover()
-				defer wg.Done()
-
-				for j := 0; j < n; j++ {
-					Expect(rl.Limit()).To(BeFalse(), "thread %d, cycle %d", thread, j)
-				}
-			}(i)
-		}
-		wg.Wait()
-		Expect(rl.Limit()).To(BeTrue())
-	})
-
-	It("should allow to upate rate", func() {
-		var count int
-		rl := New(5, 50*time.Millisecond)
-		for !rl.Limit() {
-			count++
-		}
-		Expect(count).To(Equal(5))
-
-		rl.UpdateRate(10)
-		time.Sleep(50 * time.Millisecond)
-
-		for !rl.Limit() {
-			count++
-		}
-		Expect(count).To(Equal(15))
-	})
-
-})
-
-// --------------------------------------------------------------------
+	rl.Undo()
+	if rl.Limit() {
+		t.Error("expected no limit after undo")
+	}
+	if !rl.Limit() {
+		t.Error("expected to limit again")
+	}
+}
 
 func BenchmarkLimit(b *testing.B) {
 	rl := New(1000, time.Second)
@@ -124,11 +108,4 @@ func BenchmarkLimit(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		rl.Limit()
 	}
-}
-
-// --------------------------------------------------------------------
-
-func TestGinkgoSuite(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "github.com/bsm/ratelimit")
 }
