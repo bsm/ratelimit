@@ -4,17 +4,17 @@ Inspired by Antti Huima's algorithm on http://stackoverflow.com/a/668327
 
 Example:
 
-  // Create a new rate-limiter, allowing up-to 10 calls
-  // per second
-  rl := ratelimit.New(10, time.Second)
+	// Create a new rate-limiter, allowing up-to 10 calls
+	// per second
+	rl := ratelimit.New(10, time.Second)
 
-  for i:=0; i<20; i++ {
-    if rl.Limit() {
-      fmt.Println("DOH! Over limit!")
-    } else {
-      fmt.Println("OK")
-    }
-  }
+	for i:=0; i<20; i++ {
+	  if rl.Limit() {
+	    fmt.Println("DOH! Over limit!")
+	  } else {
+	    fmt.Println("OK")
+	  }
+	}
 */
 package ratelimit
 
@@ -66,7 +66,7 @@ func (rl *RateLimiter) Limit() bool {
 
 	// Ensure our allowance is not over maximum
 	if max := atomic.LoadUint64(&rl.max); current > max {
-		atomic.AddUint64(&rl.allowance, max-current)
+		atomic.AddUint64(&rl.allowance, ^((max - current) - 1))
 		current = max
 	}
 
@@ -76,7 +76,7 @@ func (rl *RateLimiter) Limit() bool {
 	}
 
 	// Not limited, subtract a unit
-	atomic.AddUint64(&rl.allowance, -rl.unit)
+	atomic.AddUint64(&rl.allowance, ^(rl.unit - 1))
 	return false
 }
 
@@ -86,7 +86,7 @@ func (rl *RateLimiter) Undo() {
 
 	// Ensure our allowance is not over maximum
 	if max := atomic.LoadUint64(&rl.max); current > max {
-		atomic.AddUint64(&rl.allowance, max-current)
+		atomic.AddUint64(&rl.allowance, ^((max - current) - 1))
 	}
 }
 
