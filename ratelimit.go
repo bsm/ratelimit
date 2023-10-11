@@ -66,7 +66,7 @@ func (rl *RateLimiter) Limit() bool {
 
 	// Ensure our allowance is not over maximum
 	if max := atomic.LoadUint64(&rl.max); current > max {
-		atomic.AddUint64(&rl.allowance, ^((max - current) - 1))
+		atomic.AddUint64(&rl.allowance, ^((current - max) - 1))
 		current = max
 	}
 
@@ -86,7 +86,7 @@ func (rl *RateLimiter) Undo() {
 
 	// Ensure our allowance is not over maximum
 	if max := atomic.LoadUint64(&rl.max); current > max {
-		atomic.AddUint64(&rl.allowance, ^((max - current) - 1))
+		atomic.AddUint64(&rl.allowance, ^((current - max) - 1))
 	}
 }
 
