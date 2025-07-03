@@ -19,13 +19,16 @@ Example:
 package ratelimit
 
 import (
-	"sync/atomic"
+	"sync"
 	"time"
 )
 
 // RateLimiter instances are thread-safe.
 type RateLimiter struct {
-	rate, allowance, max, unit, lastCheck uint64
+	mu sync.Mutex
+
+	rate, allowance, max, unit uint64
+	lastCheck                  int64
 }
 
 // New creates a new rate limiter instance
@@ -44,30 +47,38 @@ func New(rate int, per time.Duration) *RateLimiter {
 		max:       uint64(rate) * nano, // remember our maximum allowance
 		unit:      nano,                // remember our unit size
 
-		lastCheck: unixNano(),
+		lastCheck: nowNano(),
 	}
 }
 
 // UpdateRate allows to update the allowed rate
 func (rl *RateLimiter) UpdateRate(rate int) {
-	atomic.StoreUint64(&rl.rate, uint64(rate))
-	atomic.StoreUint64(&rl.max, uint64(rate)*rl.unit)
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	rl.rate = uint64(rate)
+	rl.max = uint64(rate) * rl.unit
 }
 
 // Limit returns true if rate was exceeded
 func (rl *RateLimiter) Limit() bool {
+	now := nowNano()
+
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
 	// Calculate the number of ns that have passed since our last call
-	now := unixNano()
-	passed := now - atomic.SwapUint64(&rl.lastCheck, now)
+	passed := now - rl.lastCheck
+	rl.lastCheck = now
 
 	// Add them to our allowance
-	rate := atomic.LoadUint64(&rl.rate)
-	current := atomic.AddUint64(&rl.allowance, passed*rate)
+	rl.allowance += uint64(passed) * uint64(rl.rate)
+	current := rl.allowance
 
 	// Ensure our allowance is not over maximum
-	if max := atomic.LoadUint64(&rl.max); current > max {
-		atomic.AddUint64(&rl.allowance, ^((current - max) - 1))
-		current = max
+	if current > rl.max {
+		rl.allowance += ^((current - rl.max) - 1)
+		current = rl.max
 	}
 
 	// If our allowance is less than one unit, rate-limit!
@@ -76,21 +87,23 @@ func (rl *RateLimiter) Limit() bool {
 	}
 
 	// Not limited, subtract a unit
-	atomic.AddUint64(&rl.allowance, ^(rl.unit - 1))
+	rl.allowance += ^(rl.unit - 1)
 	return false
 }
 
 // Undo reverts the last Limit() call, returning consumed allowance
 func (rl *RateLimiter) Undo() {
-	current := atomic.AddUint64(&rl.allowance, rl.unit)
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	rl.allowance += rl.unit
 
 	// Ensure our allowance is not over maximum
-	if max := atomic.LoadUint64(&rl.max); current > max {
-		atomic.AddUint64(&rl.allowance, ^((current - max) - 1))
+	if current := rl.allowance; current > rl.max {
+		rl.allowance += ^((current - rl.max) - 1)
 	}
 }
 
-// now as unix nanoseconds
-func unixNano() uint64 {
-	return uint64(time.Now().UnixNano())
+func nowNano() int64 {
+	return time.Now().UnixNano()
 }
