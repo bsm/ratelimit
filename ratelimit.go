@@ -77,7 +77,7 @@ func (rl *RateLimiter) Limit() bool {
 
 	// Ensure our allowance is not over maximum
 	if current > rl.max {
-		rl.allowance += ^((current - rl.max) - 1)
+		rl.allowance = rl.max
 		current = rl.max
 	}
 
